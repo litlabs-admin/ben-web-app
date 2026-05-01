@@ -13,17 +13,24 @@ import {
   YAxis,
 } from "recharts";
 import {
+  CalendarCheck,
   Check,
   ClipboardList,
+  Download,
   FileText,
+  Gauge,
   Inbox,
   LayoutDashboard,
+  MailOpen,
   MessageSquareText,
   Plus,
   Save,
   Send,
   Share2,
+  Target,
+  TrendingUp,
   UsersRound,
+  type LucideIcon,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -42,6 +49,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 
 type DashboardStats = {
+  scorecard: {
+    newDeals: number;
+    pipelineValue: number;
+    meetings: number;
+    salesQualifiedLeads: number;
+    marketingQualifiedLeads: number;
+    leadsGenerated: number;
+    websiteVisits: number;
+    leadMagnetDownloads: number;
+    averageOpenRate: number;
+    averageConversionRate: number;
+  };
+  pipeline: { stage: string; value: number; count: number }[];
+  leadSources: { source: string; leads: number; color: string }[];
+  funnel: { name: string; value: number }[];
   redditTotal: number;
   redditPosted: number;
   redditQueued: number;
@@ -72,6 +94,27 @@ type RequestItem = {
 };
 
 const emptyStats: DashboardStats = {
+  scorecard: {
+    newDeals: 0,
+    pipelineValue: 0,
+    meetings: 0,
+    salesQualifiedLeads: 0,
+    marketingQualifiedLeads: 0,
+    leadsGenerated: 0,
+    websiteVisits: 0,
+    leadMagnetDownloads: 0,
+    averageOpenRate: 0,
+    averageConversionRate: 0,
+  },
+  pipeline: [],
+  leadSources: [],
+  funnel: [
+    { name: "Visits", value: 0 },
+    { name: "Downloads", value: 0 },
+    { name: "MQLs", value: 0 },
+    { name: "SQLs", value: 0 },
+    { name: "Deals", value: 0 },
+  ],
   redditTotal: 0,
   redditPosted: 0,
   redditQueued: 0,
@@ -99,13 +142,34 @@ const emptyStats: DashboardStats = {
 };
 
 const navItems = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "scorecard", label: "Scorecard", icon: LayoutDashboard },
+  { id: "priorities", label: "Priorities", icon: Target },
   { id: "approvals", label: "Approvals", icon: FileText },
   { id: "requests", label: "Requests", icon: ClipboardList },
 ];
 
+const currencyFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
+
+const numberFormatter = new Intl.NumberFormat("en-US");
+
+function formatNumber(value: number) {
+  return numberFormatter.format(value);
+}
+
+function formatCurrency(value: number) {
+  return currencyFormatter.format(value);
+}
+
+function formatPercent(value: number) {
+  return `${Math.round(value)}%`;
+}
+
 export function ClientDashboard() {
-  const [activeSection, setActiveSection] = useState("dashboard");
+  const [activeSection, setActiveSection] = useState("scorecard");
   const [contentItems, setContentItems] = useState<ContentItem[]>([]);
   const [requests, setRequests] = useState<RequestItem[]>([]);
   const [requestTitle, setRequestTitle] = useState("");
@@ -156,6 +220,72 @@ export function ClientDashboard() {
       })),
     [requests],
   );
+
+  const scorecards = [
+    {
+      label: "New Deals",
+      value: formatNumber(stats.scorecard.newDeals),
+      detail: "Open, new, discovery, or qualified deals",
+      icon: Target,
+    },
+    {
+      label: "Pipeline",
+      value: formatCurrency(stats.scorecard.pipelineValue),
+      detail: `${stats.pipeline.reduce((total, stage) => total + stage.count, 0)} active opportunities`,
+      icon: TrendingUp,
+    },
+    {
+      label: "Meetings",
+      value: formatNumber(stats.scorecard.meetings),
+      detail: "Scheduled, held, booked, or completed",
+      icon: CalendarCheck,
+    },
+    {
+      label: "SQLs",
+      value: formatNumber(stats.scorecard.salesQualifiedLeads),
+      detail: "Sales qualified leads",
+      icon: UsersRound,
+    },
+    {
+      label: "MQLs",
+      value: formatNumber(stats.scorecard.marketingQualifiedLeads),
+      detail: "Marketing qualified leads",
+      icon: Gauge,
+    },
+    {
+      label: "Leads Generated",
+      value: formatNumber(stats.scorecard.leadsGenerated),
+      detail: "Attributed to campaign activity",
+      icon: Share2,
+    },
+    {
+      label: "Website Visits",
+      value: formatNumber(stats.scorecard.websiteVisits),
+      detail: "Tracked sessions or visits",
+      icon: LayoutDashboard,
+    },
+    {
+      label: "Lead Magnet Downloads",
+      value: formatNumber(stats.scorecard.leadMagnetDownloads),
+      detail: "Downloads from tracked assets",
+      icon: Download,
+    },
+  ];
+
+  const engagementMetrics = [
+    {
+      label: "Email Open Rate",
+      value: formatPercent(stats.scorecard.averageOpenRate),
+      detail: "Helpful signal, secondary to pipeline outcomes",
+      icon: MailOpen,
+    },
+    {
+      label: "Conversion Rate",
+      value: formatPercent(stats.scorecard.averageConversionRate),
+      detail: "Average across tracked campaign and site records",
+      icon: TrendingUp,
+    },
+  ];
 
   const operations = [
     {
@@ -274,7 +404,7 @@ export function ClientDashboard() {
               <p className="text-xs font-medium uppercase tracking-[0.16em] text-muted-foreground">
                 Client Portal
               </p>
-              <h1 className="mt-1 text-lg font-semibold">Execution Hub</h1>
+              <h1 className="mt-1 text-lg font-semibold">Performance Scorecard</h1>
             </div>
             <Badge variant={pendingCount ? "warning" : "success"}>
               {pendingCount ? `${pendingCount} to review` : "Clear"}
@@ -304,8 +434,8 @@ export function ClientDashboard() {
         <section className="flex-1">
           <header className="flex flex-col gap-4 border-b bg-background/90 px-5 py-5 backdrop-blur md:flex-row md:items-center md:justify-between lg:px-8">
             <div>
-              <p className="text-sm text-muted-foreground">Live Airtable operations</p>
-              <h2 className="text-2xl font-semibold tracking-tight">What is moving right now</h2>
+              <p className="text-sm text-muted-foreground">Live Airtable performance</p>
+              <h2 className="text-2xl font-semibold tracking-tight">Revenue, lead, and engagement outcomes</h2>
             </div>
             <RequestDialog
               open={requestOpen}
@@ -333,18 +463,112 @@ export function ClientDashboard() {
               </Card>
             )}
 
-            <section id="dashboard" className="grid gap-5">
+            <section id="scorecard" className="grid gap-5">
+              <SectionHeading
+                icon={LayoutDashboard}
+                title="Scorecard"
+                description="Performance metrics first, with activity signals treated as supporting context."
+              />
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                {operations.map((operation) => (
-                  <OperationCard key={operation.label} {...operation} loading={loading} />
+                {scorecards.map((metric) => (
+                  <MetricCard key={metric.label} {...metric} loading={loading} />
                 ))}
               </div>
 
               <div className="grid gap-5 xl:grid-cols-[1.15fr_0.85fr]">
                 <Card>
                   <CardHeader>
+                    <CardTitle>Pipeline by stage</CardTitle>
+                    <CardDescription>Deal count and value by current sales stage.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="h-72">
+                    {loading ? (
+                      <EmptyChartLabel label="Loading Airtable" />
+                    ) : stats.pipeline.length ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={stats.pipeline}>
+                          <XAxis dataKey="stage" tickLine={false} axisLine={false} />
+                          <YAxis hide />
+                          <Tooltip
+                            cursor={{ fill: "hsl(var(--muted))" }}
+                            formatter={(value, name) =>
+                              name === "value" ? [formatCurrency(Number(value)), "Pipeline"] : [value, "Deals"]
+                            }
+                          />
+                          <Bar dataKey="value" name="value" fill="#0f766e" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="count" name="count" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <EmptyChartLabel label="No pipeline records yet" />
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Leads by source</CardTitle>
+                    <CardDescription>Lead generation attributed to activity source.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="grid gap-4 md:grid-cols-[0.85fr_1fr] xl:grid-cols-1">
+                    <div className="h-48">
+                      {loading ? (
+                        <EmptyChartLabel label="Loading Airtable" />
+                      ) : stats.leadSources.length ? (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie data={stats.leadSources} innerRadius={48} outerRadius={72} dataKey="leads" nameKey="source">
+                              {stats.leadSources.map((entry) => (
+                                <Cell key={entry.source} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      ) : (
+                        <EmptyChartLabel label="No lead source data yet" />
+                      )}
+                    </div>
+                    <div className="grid content-center gap-2">
+                      {stats.leadSources.length ? (
+                        stats.leadSources.map((source) => (
+                          <div key={source.source} className="flex items-center justify-between text-sm">
+                            <span className="flex items-center gap-2">
+                              <span
+                                className="size-2 rounded-full"
+                                style={{ backgroundColor: source.color }}
+                              />
+                              {source.source}
+                            </span>
+                            <span className="font-medium">{formatNumber(source.leads)}</span>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground">Add Lead_Activity records to populate this view.</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                {engagementMetrics.map((metric) => (
+                  <MetricCard key={metric.label} {...metric} loading={loading} compact />
+                ))}
+              </div>
+            </section>
+
+            <section id="priorities" className="grid gap-5">
+              <SectionHeading
+                icon={Target}
+                title="Priority view"
+                description="Execution and workload remain visible, but secondary to scorecard outcomes."
+              />
+              <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+                <Card>
+                  <CardHeader>
                     <CardTitle>Execution checklist</CardTitle>
-                    <CardDescription>Work that has to happen before results can show up.</CardDescription>
+                    <CardDescription>Work that supports the performance metrics above.</CardDescription>
                   </CardHeader>
                   <CardContent className="grid gap-5">
                     {stats.checklist.map((item) => (
@@ -355,66 +579,33 @@ export function ClientDashboard() {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Channel workload</CardTitle>
-                    <CardDescription>Where the team is spending execution time.</CardDescription>
+                    <CardTitle>Weekly activity</CardTitle>
+                    <CardDescription>Posting, email preparation, and Unify list work.</CardDescription>
                   </CardHeader>
-                  <CardContent className="grid gap-4 md:grid-cols-[0.85fr_1fr] xl:grid-cols-1">
-                    <div className="h-48">
-                      {loading ? (
-                        <EmptyChartLabel label="Loading Airtable" />
-                      ) : (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie data={stats.channelMix} innerRadius={48} outerRadius={72} dataKey="value">
-                              {stats.channelMix.map((entry) => (
-                                <Cell key={entry.name} fill={entry.color} />
-                              ))}
-                            </Pie>
-                            <Tooltip />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      )}
-                    </div>
-                    <div className="grid content-center gap-2">
-                      {stats.channelMix.map((source) => (
-                        <div key={source.name} className="flex items-center justify-between text-sm">
-                          <span className="flex items-center gap-2">
-                            <span
-                              className="size-2 rounded-full"
-                              style={{ backgroundColor: source.color }}
-                            />
-                            {source.name}
-                          </span>
-                          <span className="font-medium">{source.value}%</span>
-                        </div>
-                      ))}
-                    </div>
+                  <CardContent className="h-72">
+                    {loading ? (
+                      <EmptyChartLabel label="Loading Airtable" />
+                    ) : (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={stats.weeklyActivity}>
+                          <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                          <YAxis hide />
+                          <Tooltip cursor={{ fill: "hsl(var(--muted))" }} />
+                          <Bar dataKey="reddit" name="Reddit posts" fill="#dc2626" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="email" name="Emails" fill="#0f766e" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="unify" name="Unify records" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
                   </CardContent>
                 </Card>
               </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Weekly activity</CardTitle>
-                  <CardDescription>Posting, email preparation, and Unify list work.</CardDescription>
-                </CardHeader>
-                <CardContent className="h-72">
-                  {loading ? (
-                    <EmptyChartLabel label="Loading Airtable" />
-                  ) : (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={stats.weeklyActivity}>
-                        <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                        <YAxis hide />
-                        <Tooltip cursor={{ fill: "hsl(var(--muted))" }} />
-                        <Bar dataKey="reddit" name="Reddit posts" fill="#dc2626" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="email" name="Emails" fill="#0f766e" radius={[4, 4, 0, 0]} />
-                        <Bar dataKey="unify" name="Unify records" fill="#2563eb" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  )}
-                </CardContent>
-              </Card>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {operations.map((operation) => (
+                  <OperationCard key={operation.label} {...operation} loading={loading} />
+                ))}
+              </div>
             </section>
 
             <section id="approvals" className="grid gap-5">
@@ -761,6 +952,43 @@ function SelectField({
   );
 }
 
+function MetricCard({
+  label,
+  value,
+  detail,
+  icon: Icon,
+  loading,
+  compact = false,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  icon: LucideIcon;
+  loading: boolean;
+  compact?: boolean;
+}) {
+  return (
+    <Card>
+      <CardHeader className={compact ? "pb-3" : undefined}>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle>{label}</CardTitle>
+            <CardDescription>{detail}</CardDescription>
+          </div>
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-secondary text-secondary-foreground">
+            <Icon className="size-4" />
+          </span>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <p className={cn("font-semibold tracking-tight", compact ? "text-2xl" : "text-3xl")}>
+          {loading ? "-" : value}
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
 function OperationCard({
   label,
   value,
@@ -773,7 +1001,7 @@ function OperationCard({
   value: string;
   detail: string;
   trend: string;
-  icon: typeof Share2;
+  icon: LucideIcon;
   loading: boolean;
 }) {
   return (

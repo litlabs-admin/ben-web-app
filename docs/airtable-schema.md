@@ -58,3 +58,51 @@ Create these tables in one Airtable base. Field names should match exactly so th
 | Description | Long text | Context from request form |
 | Priority | Single select | Low, Medium, High |
 | Status | Single select | To-Do, In Progress, Delivered |
+
+## Deal_Pipeline
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| Deal_Name | Single line text | Company or opportunity name |
+| Stage | Single select | New, Discovery, Qualified, Proposal, Negotiation, Won, Lost |
+| Pipeline_Value | Currency or number | Expected deal value |
+| Created_Date | Date | Date the deal entered the pipeline |
+| Source | Single select | Reddit, Email, Unify, Website, Referral, Manual, Other |
+| Owner | Single line text | Optional sales owner |
+| Notes | Long text | Optional deal context |
+
+## Meetings
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| Meeting_Name | Single line text | Prospect or meeting label |
+| Status | Single select | Scheduled, Completed, Held, Booked, Canceled, No Show |
+| Meeting_Date | Date | Scheduled or completed date |
+| Source | Single select | Reddit, Email, Unify, Website, Referral, Manual, Other |
+| Related_Deal | Link to Deal_Pipeline | Optional |
+| Notes | Long text | Optional meeting context |
+
+## Lead_Activity
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| Activity_Name | Single line text | Campaign, post, sequence, asset, or source label |
+| Source | Single select | Reddit, Email, Unify, Website, Lead Magnet, Referral, Manual, Other |
+| Leads_Generated | Number | Count of generated leads for the row |
+| Lifecycle_Stage | Single select | Lead, MQL, SQL, Customer |
+| MQL_Count | Number | Optional direct MQL count |
+| SQL_Count | Number | Optional direct SQL count |
+| Conversion_Rate | Percent or number | Optional conversion rate for this activity |
+| Activity_Date | Date | Date the leads were generated |
+
+## Website_Analytics
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| Period | Single line text | Example: 2026-05 week 1 |
+| Date | Date | Reporting date or period start |
+| Website_Visits | Number | Visits or sessions |
+| Lead_Magnet_Downloads | Number | Total downloads of gated assets |
+| Conversion_Rate | Percent or number | Visitor-to-lead or asset conversion rate |
+| Lead_Magnet_Name | Single line text | Optional asset name |
+| Notes | Long text | Optional analytics context |
